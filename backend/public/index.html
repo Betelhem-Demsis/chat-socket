@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Chat App</h1>
+
+  <!-- Registration Section -->
+  <div>
+    <h2>Register</h2>
+    <input id="phoneNumber" placeholder="Phone Number" />
+    <input id="name" placeholder="Name" />
+    <button id="registerBtn">Register</button>
+  </div>
+
+  <!-- Chat Section -->
+  <div id="chatSection" style="display:none;">
+    <h2>Chat</h2>
+    <div id="users"></div>
+    <input id="recipient" placeholder="Recipient Phone Number" />
+    <input id="message" placeholder="Message" />
+    <button id="sendBtn">Send</button>
+    <div id="messages"></div>
+  </div>
+
+  <script>
+    const socket = io('http://localhost:3000');
+
+    document.getElementById('registerBtn').addEventListener('click', () => {
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      const name = document.getElementById('name').value;
+      socket.emit('register', { phoneNumber, name });
+    });
+
+    socket.on('registered', ({ success, users }) => {
+      if (success) {
+        document.getElementById('chatSection').style.display = 'block';
+        const usersDiv = document.getElementById('users');
+        usersDiv.innerHTML = '<h3>Online Users:</h3>';
+        for (let user in users) {
+          usersDiv.innerHTML += `<p>${users[user].name} (${user})</p>`;
+        }
+      }
+    });
+
+    document.getElementById('sendBtn').addEventListener('click', () => {
+      const recipient = document.getElementById('recipient').value;
+      const message = document.getElementById('message').value;
+      socket.emit('send_message', {
+        from: document.getElementById('phoneNumber').value,
+        to: recipient,
+        text: message
+      });
+    });
+
+    socket.on('receive_message', ({ from, text }) => {
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML += `<p><strong>${from}:</strong> ${text}</p>`;
+    });
+  </script>
+</body>
+</html>
